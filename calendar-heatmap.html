@@ -31,7 +31,13 @@ body {
 .RdYlGn .q10-11{fill:rgb(0,104,55)}
 </style>
 <body>
+  <script type="text/javascript" src="https://www.google.com/jsapi"></script>
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.8.3/underscore-min.js"></script>
+  <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.5.1/jquery.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.6/d3.min.js"></script>
+  <script>
+    google.load("visualization", "1", {packages: ["corechart", "bar", "treemap"]});
+  </script>
   <script>
     var divider = 7000;
 
@@ -105,5 +111,101 @@ body {
     }
 
     d3.select(self.frameElement).style("height", "2910px");
+  </script>
+  <script>
+    var id2Chart = {};
+    var getChartWithId = function(id, createChartWithElement) {
+      var chart = id2Chart[id];
+
+      if (chart === undefined) {
+        $(document.body).append("<div id='" + id + "'></div>");
+        chart = createChartWithElement(document.getElementById(id));
+        id2Chart[id] = chart;
+      }
+
+      return chart;
+    }
+
+    d3.csv("log.csv", function(error, rows) {
+      var year2Month2Quantity = new Map(function() {
+        return {
+          1: 0,
+          2: 0,
+          3: 0,
+          4: 0,
+          5: 0,
+          6: 0,
+          7: 0,
+          8: 0,
+          9: 0,
+          10: 0,
+          11: 0,
+          12: 0,
+        };
+      });
+
+      _.each(rows, function(row) {
+        var date = new Date(row.Date);
+        var quantity = parseInt(row.Quantity, 10);
+
+        var year = date.getFullYear();
+        var month = date.getMonth() + 1; // Change 0-based index to 1-based
+
+        year2Month2Quantity.get(year)[month] += quantity;
+      });
+
+      _.each(Object.keys(year2Month2Quantity).slice().sort(), function(year) {
+        var month2Quantity = year2Month2Quantity[year];
+
+        var chartData = [
+          ["Month", "Quantity"]
+        ];
+        var totalQuantity = 0;
+
+        var sortedMonths = _.map(Object.keys(month2Quantity), function(month) {
+          return parseInt(month);
+        }).sort(function(a, b) {
+          return a - b;
+        });
+
+        _.each(sortedMonths, function(month) {
+          var quantity = month2Quantity[month];
+
+          chartData.push([month.toString(), quantity]);
+          totalQuantity += quantity;
+        });
+        chartData = google.visualization.arrayToDataTable(chartData);
+
+        var chartOptions = {
+          "title": year + " (" + totalQuantity + ")",
+          vAxis: { maxValue: 3500 } // so the y-axis numbers between charts are the same
+        };
+
+        var chart = getChartWithId("barChart" + year, function(element) {
+          return new google.visualization.ColumnChart(element);
+        });
+        chart.draw(chartData, chartOptions);
+      });
+    });
+
+    function Map(createInitialValue) {
+      this.get = function(key) {
+        var existingValue = this[key];
+
+        if (existingValue === undefined) {
+          existingValue = createInitialValue();
+          this[key] = existingValue;
+        }
+
+        return existingValue;
+      }
+
+      Object.defineProperties(this, {
+        "get": {
+          enumerable: false
+        }
+      });
+    }
+
   </script>
 </body>

@@ -33,7 +33,7 @@ body {
 <body>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.6/d3.min.js"></script>
   <script>
-    var divider = 5000;
+    var divider = 7000;
 
     var width = 960,
         height = 136,
@@ -47,7 +47,7 @@ body {
         .range(d3.range(11).map(function(d) { return "q" + d + "-11"; }));
 
     var svg = d3.select("body").selectAll("svg")
-        .data(d3.range(2013, 2016))
+        .data(d3.range(2010, 2016))
       .enter().append("svg")
         .attr("width", width)
         .attr("height", height)
